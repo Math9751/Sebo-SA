@@ -9,21 +9,21 @@ conexao = mysql.connector.connect(
 
 cursor = conexao.cursor()
 
-# CREATE itens
-titulo = 'O Corvo'
-autor = 'Edgar Allan Poe'
-preco = 58.90
-descricao = 'Poema'
-status = 1
-periodicidade = 'mensal'
-dataEdicao = 20201214
-area = 4
-vendedor = 2
-categoria = 4
-comando = f'INSERT INTO itens (titulo, autor, preco, descricao, status, periodicidade, dataEdicao, area, userID, categoriaID) VALUES ("{titulo}", "{autor}", {preco}, "{descricao}", {status}, "{periodicidade}", {dataEdicao}, {area}, {vendedor}, {categoria})'
-cursor.execute(comando)
-conexao.commit() #edita o banco de dados
-resultado = cursor.fetchall() #lê o banco de dados
+# # CREATE itens
+# titulo = 'O Corvo'
+# autor = 'Edgar Allan Poe'
+# preco = 58.90
+# descricao = 'Poema'
+# status = 1
+# periodicidade = 'mensal'
+# dataEdicao = 20201214
+# area = 4
+# vendedor = 2
+# categoria = 4
+# comando = f'INSERT INTO itens (titulo, autor, preco, descricao, status, periodicidade, dataEdicao, area, userID, categoriaID) VALUES ("{titulo}", "{autor}", {preco}, "{descricao}", {status}, "{periodicidade}", {dataEdicao}, {area}, {vendedor}, {categoria})'
+# cursor.execute(comando)
+# conexao.commit() #edita o banco de dados
+# resultado = cursor.fetchall() #lê o banco de dados
 
 # CREATE users
 # nome = 
@@ -45,16 +45,16 @@ resultado = cursor.fetchall() #lê o banco de dados
 
 
 # UPDATE
-# nome_produto = "iphone"
-# valor = 6000
-# comando = f'UPDATE vendas SET valor = {valor} WHERE nome_produto = "{nome_produto}"'
-# cursor.execute(comando)
-# conexao.commit()
+titulo = "O Corvo"
+preco = 54.90
+comando = f'UPDATE itens SET preco = {preco} WHERE titulo = "{titulo}"'
+cursor.execute(comando)
+conexao.commit()
 
 
 # DELETE
-# nome_produto = "iphone"
-# comando = f'DELETE FROM vendas WHERE nome_produto = "{nome_produto}"'
+# titulo = "O Corvo"
+# comando = f'DELETE FROM itens WHERE titulo = "{titulo}"'
 # cursor.execute(comando)
 # conexao.commit()
 
