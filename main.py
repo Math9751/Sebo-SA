@@ -279,7 +279,7 @@ def create_categoria():
         # Retorna a categoria criada
         return jsonify(
             mensagem='Categoria adicionada com sucesso.',
-            álbum=categoria
+            categoria=categoria
             ), 201  # 201 Created
 
     except Exception as e:
@@ -294,7 +294,7 @@ def update_categoria():
         # Atualiza a categoria
         cursor = conexao.cursor()
 
-        update = f"UPDATE categorias SET nomeCategoria = '{categoria['nomeCategoria']}' WHERE id = '{categoria['categoriaID']}'"
+        update = f"UPDATE categorias SET nomeCategoria = '{categoria['nomeCategoria']}' WHERE categoriaID = '{categoria['categoriaID']}'"
         cursor.execute(update)
         conexao.commit()
 
