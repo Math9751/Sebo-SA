@@ -1,5 +1,11 @@
-from flask import Flask, make_response, jsonify, request
+from flask import Flask, g, make_response, jsonify, request
 import mysql.connector
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+from functools import wraps
+import secrets
+
 
 conexao = mysql.connector.connect(
     host='localhost',
@@ -8,9 +14,132 @@ conexao = mysql.connector.connect(
     database='db_sebo',
 )
 
-app = Flask(__name__)
-app.config['JSON_SORT_KEYS'] = False 
+secret_key = secrets.token_hex(16)
+#Exemplo de saída, secret_key = 4bd253d62aae3cf0230c1cd0dc6c107c
 
+app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False
+app.config['SECRET_KEY'] = secret_key
+
+#-----------USERS----------------------------------------------------------------------------------------------
+@app.route('/users/cadastro', methods=['POST'])
+def cadastrar_user():
+    try:
+        user_data = request.get_json()
+
+        # Criptografa a senha antes de armazenar no banco de dados
+        senha_hash = generate_password_hash(user_data['senha'])
+
+        cursor = conexao.cursor()
+        create = f"INSERT INTO users (nome, email, senha, tipo, isAdmin) VALUES ('{user_data['nome']}', '{user_data['email']}', '{senha_hash}', '{user_data['tipo']}', {user_data.get('isAdmin', 0)})"
+        cursor.execute(create)
+        conexao.commit()
+
+        return jsonify(
+            mensagem='Usuário cadastrado com sucesso.',
+            user=user_data
+        ), 201  # 201 Created
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400  # 400 Bad Request
+
+# Exemplo de depuração
+import jwt
+
+# ... (código anterior)
+
+@app.route('/users/login', methods=['POST'])
+def login_user():
+    try:
+        dados_login = request.get_json()
+
+        cursor = conexao.cursor()
+        read = f"SELECT * FROM users WHERE email = '{dados_login['email']}'"
+        cursor.execute(read)
+        user = cursor.fetchone()
+
+        print("Dados de Login:", dados_login)
+        print("Usuário do Banco de Dados:", user)
+
+        if user is not None:
+            user_id_str = str(user[0])
+            expiration_time = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+            
+            print("User ID (convertido para string):", user_id_str)
+            print("Tempo de Expiração:", expiration_time)
+
+            payload = {
+                'user_id': user_id_str,
+                'exp': expiration_time
+            }
+
+            secret_key = app.config['SECRET_KEY']
+            
+            print("Payload:", payload)
+            print("Chave Secreta:", secret_key)
+
+            token = jwt.encode(payload, secret_key, algorithm='HS256')
+
+            print("Token Gerado:", token)
+
+            return jsonify(
+                mensagem='Login bem-sucedido.',
+                token=token
+            ), 200  # 200 OK
+        else:
+            return jsonify({"error": "Credenciais inválidas."}), 401  # 401 Unauthorized
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400  # 400 Bad Request
+
+# def verifica_token(f):
+#     @wraps(f)
+#     def decorator(*args, **kwargs):
+#         token = None
+
+#         if 'Authorization' in request.headers:
+#             token = request.headers['Authorization'].split(" ")[1]
+
+#         if not token:
+#             return jsonify({"error": "Token ausente."}), 401  # 401 Unauthorized
+
+#         try:
+#             decoded_data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+#             # Adiciona informações do usuário ao contexto da solicitação
+#             g.user_id = decoded_data['user_id']
+#             print(f"Token decodificado com sucesso: {decoded_data}")
+#         except jwt.ExpiredSignatureError:
+#             return jsonify({"error": "Token expirado."}), 401  # 401 Unauthorized
+#         except jwt.InvalidTokenError as e:
+#             print(f"Erro ao decodificar o token: {e}")
+#             return jsonify({"error": f"Token inválido. Detalhes: {str(e)}"}), 401  # 401 Unauthorized
+
+#         return f(*args, **kwargs)
+
+#     return decorator
+
+
+
+# @app.route('/users/perfil', methods=['GET'])
+# @verifica_token
+# def obter_perfil_user():
+#     # O ID do usuário está disponível em g.user_id
+#     # Você pode usar isso para recuperar informações do usuário no banco de dados
+#     cursor = conexao.cursor()
+#     read = f"SELECT * FROM users WHERE userID = {g.user_id}"
+#     cursor.execute(read)
+#     user = cursor.fetchone()
+    
+#     if user:
+#         return jsonify({
+#             'nome': user[1],
+#             'email': user[2],
+#             'isAdmin': bool(user[4])  # Convertendo para booleano
+#         }), 200  # 200 OK
+#     else:
+#         return jsonify({"error": "Usuário não encontrado."}), 404  # 404 Not Found
+
+#-----------ITENS------------------------------------------------------------------------------------
 @app.route('/itens', methods=['GET'])
 def get_itens():
 
@@ -107,6 +236,8 @@ def delete_item():
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
 
+
+#-----------CATEGORIAS-----------------------------------------------------------------------------------------------
 @app.route('/categorias', methods=['GET'])
 def get_categorias():
 
