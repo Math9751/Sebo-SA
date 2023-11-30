@@ -100,7 +100,7 @@ def login_user():
                 token=token
             ), 200  # 200 OK
         else:
-            return jsonify({"error": "Credenciais inválidas."}), 401  # 401 Unauthorized
+            return jsonify({"error": "Senha incorreta. Tente novamente."}), 401  # 401 Unauthorized
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
