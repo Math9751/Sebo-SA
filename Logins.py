@@ -26,5 +26,9 @@ Usuarios = [
     {
         "email": "padua633@gmail.com",
         "senha": "$@8847H"
-    }    
+    },
+    {
+        "email": "v1c70rj4r43@gmail.com",
+        "senha": "3lc0nd0rqu3p454"
+    }
 ]

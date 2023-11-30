@@ -243,7 +243,8 @@ def get_itens():
                 'dataEdicao': item[6],
                 'userID': item[7],
                 'categoriaID': item[8],
-                'status': item[9]
+                'status': item[9],
+                'isbn': item[10]
             }
         )
 
@@ -399,7 +400,7 @@ def update_categoria():
         # Atualiza a categoria
         cursor = conexao.cursor()
 
-        update = f"UPDATE categorias SET nomeCategoria = '{categoria['nomeCategoria']}' WHERE categoriaID = '{categoria['categoriaID']}'"
+        update = f"UPDATE categorias SET nomeCategoria = '{categoria['nomeCategoria']}', status = '{categoria['status']}' WHERE categoriaID = '{categoria['categoriaID']}'"
         cursor.execute(update)
         conexao.commit()
 
