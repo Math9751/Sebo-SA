@@ -52,11 +52,6 @@ def cadastrar_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
 
-# Exemplo de depuração
-import jwt
-
-# ... (código anterior)
-
 @app.route('/users/login', methods=['POST'])
 def login_user():
     try:
@@ -70,40 +65,43 @@ def login_user():
         print("Dados de Login:", dados_login)
         print("Usuário do Banco de Dados:", user)
 
-        if user is not None and check_password_hash(user[3], dados_login['senha']):
-            user_id_str = str(user[0])
-            expiration_time = datetime.datetime.utcnow() + datetime.timedelta(days=1)
-            
-            print("User ID (convertido para string):", user_id_str)
-            print("Tempo de Expiração:", expiration_time)
+        if user is not None:
+            if check_password_hash(user[3], dados_login['senha']):
+                user_id_str = str(user[0])
+                expiration_time = datetime.datetime.utcnow() + datetime.timedelta(days=1)
+                
+                print("User ID (convertido para string):", user_id_str)
+                print("Tempo de Expiração:", expiration_time)
 
-            payload = {
-                'user_id': user_id_str,
-                'exp': expiration_time
-            }
+                payload = {
+                    'user_id': user_id_str,
+                    'exp': expiration_time
+                }
 
-            secret_key = app.config['SECRET_KEY']
-            
-            print("Payload:", payload)
-            print("Chave Secreta:", secret_key)
+                secret_key = app.config['SECRET_KEY']
+                
+                print("Payload:", payload)
+                print("Chave Secreta:", secret_key)
 
-            token = jwt.encode({
-                'user_id': user[0],  # Substitua por sua lógica para obter o ID do usuário
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
-                }, app.config['SECRET_KEY'], algorithm='HS256')
+                token = jwt.encode({
+                    'user_id': user[0],  # Substitua por sua lógica para obter o ID do usuário
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
+                    }, app.config['SECRET_KEY'], algorithm='HS256')
 
+                print("Token Gerado:", token)
 
-            print("Token Gerado:", token)
-
-            return jsonify(
-                mensagem='Login bem-sucedido.',
-                token=token
-            ), 200  # 200 OK
+                return jsonify(
+                    mensagem='Login bem-sucedido.',
+                    token=token
+                ), 200  # 200 OK
+            else:
+                return jsonify({"error": "Senha incorreta. Tente novamente."}), 401  # 401 Unauthorized
         else:
             return jsonify({"error": "E-mail não cadastrado. Por favor, faça o cadastro."}), 401  # 401 Unauthorized
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
+
 
 def verifica_token(f):
     @wraps(f)
