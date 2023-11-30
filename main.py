@@ -149,6 +149,20 @@ def verifica_admin(f):
 
     return decorator
 
+@app.route('/users/logout', methods=['POST'])
+@verifica_token
+def logout_user():
+    try:
+        # Lado do Cliente: Nenhuma ação necessária aqui, já que o token foi removido do armazenamento local do cliente.
+
+        # Lado do Servidor (opcional): Adicione o token à lista negra para invalidá-lo posteriormente.
+        token = request.headers['Authorization'].split(" ")[1]
+        g.blacklisted_tokens.add(token)  # Assumindo que g.blacklisted_tokens é um conjunto global para armazenar tokens inválidos
+
+        return jsonify({"mensagem": "Logout bem-sucedido."}), 200  # 200 OK
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400  # 400 Bad Request
 
 @app.route('/users/relatorio', methods=['GET'])
 # @verifica_token
