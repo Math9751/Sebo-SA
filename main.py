@@ -70,7 +70,7 @@ def login_user():
         print("Dados de Login:", dados_login)
         print("Usuário do Banco de Dados:", user)
 
-        if user is not None:
+        if user is not None and check_password_hash(user[3], dados_login['senha']):
             user_id_str = str(user[0])
             expiration_time = datetime.datetime.utcnow() + datetime.timedelta(days=1)
             
@@ -100,7 +100,7 @@ def login_user():
                 token=token
             ), 200  # 200 OK
         else:
-            return jsonify({"error": "Senha incorreta. Tente novamente."}), 401  # 401 Unauthorized
+            return jsonify({"error": "E-mail não cadastrado. Por favor, faça o cadastro."}), 401  # 401 Unauthorized
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
