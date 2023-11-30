@@ -293,7 +293,7 @@ def update_item():
         return jsonify(
             mensagem='Livro atualizado com sucesso.',
             álbum=item
-            ), 201  # 201 Created
+            ), 200  # 200 Created
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
@@ -315,7 +315,7 @@ def update_isbn():
         return jsonify(
             mensagem='ISBN atualizada com sucesso.',
             álbum=item
-            ), 201  # 201 Created
+            ), 200  # 200 Created
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
@@ -337,7 +337,7 @@ def delete_item():
         # Confirma a exclusão da categoria
         return jsonify(
             mensagem='Livro excluído com sucesso.'
-            ), 201  # 201 Created
+            ), 200  # 200 Created
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
 
@@ -407,7 +407,7 @@ def update_categoria():
         return jsonify(
             mensagem='Categoria atualizada com sucesso.',
             álbum=categoria
-            ), 201  # 201 Created
+            ), 200  # 200 Created
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
@@ -428,7 +428,7 @@ def delete_categoria():
         # Confirma a exclusão da categoria
         return jsonify(
             mensagem='Categoria excluída com sucesso.'
-            ), 201  # 201 Created
+            ), 200  # 200 Created
 
 
     except Exception as e:
