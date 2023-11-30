@@ -254,7 +254,7 @@ def create_item():
 
         # Adicione o novo item à lista
         cursor = conexao.cursor()
-        create = f"INSERT INTO itens (titulo, autor, preco, descricao, periodicidade, dataEdicao, userID, categoriaID) VALUES ('{item['titulo']}', '{item['autor']}', '{item['preco']}', '{item['descricao']}', '{item['periodicidade']}', '{item['dataEdicao']}', '{item['userID']}', '{item['categoriaID']}')"
+        create = f"INSERT INTO itens (titulo, autor, preco, descricao, periodicidade, dataEdicao, userID, categoriaID, isbn) VALUES ('{item['titulo']}', '{item['autor']}', '{item['preco']}', '{item['descricao']}', '{item['periodicidade']}', '{item['dataEdicao']}', '{item['userID']}', '{item['categoriaID']}', '{item['isbn']}')"
         cursor.execute(create)
         conexao.commit()
 
@@ -276,7 +276,7 @@ def update_item():
         # Atualiza o item 
         cursor = conexao.cursor()
 
-        update = f"UPDATE itens SET titulo = '{item['titulo']}', autor = '{item['autor']}', preco = '{item['preco']}', descricao = '{item['descricao']}', periodicidade = '{item['periodicidade']}', dataEdicao = '{item['dataEdicao']}', userID = '{item['userID']}', categoriaID = '{item['categoriaID']}' WHERE itemID = '{item['itemID']}'"
+        update = f"UPDATE itens SET titulo = '{item['titulo']}', autor = '{item['autor']}', preco = '{item['preco']}', descricao = '{item['descricao']}', periodicidade = '{item['periodicidade']}', dataEdicao = '{item['dataEdicao']}', userID = '{item['userID']}', categoriaID = '{item['categoriaID']}' WHERE isbn = '{item['isbn']}'"
         cursor.execute(update)
         conexao.commit()
 
@@ -288,6 +288,29 @@ def update_item():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
+
+@app.route('/itens/isbn', methods=['PUT'])
+def update_isbn():
+    try:
+        # Obtenha os dados do corpo da solicitação como JSON
+        item = request.get_json()
+
+        # Atualiza o item 
+        cursor = conexao.cursor()
+
+        update = f"UPDATE itens SET isbn = '{item['isbn']}' WHERE titulo = '{item['titulo']}'"
+        cursor.execute(update)
+        conexao.commit()
+
+        # Retorne o item criado
+        return jsonify(
+            mensagem='ISBN atualizada com sucesso.',
+            álbum=item
+            ), 201  # 201 Created
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400  # 400 Bad Request
+
 
 @app.route('/itens', methods=['DELETE'])
 def delete_item():
