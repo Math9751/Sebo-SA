@@ -27,6 +27,15 @@ def cadastrar_user():
     try:
         user_data = request.get_json()
 
+        # Verifica se o e-mail já existe no banco de dados
+        cursor = conexao.cursor()
+        check_email_query = f"SELECT COUNT(*) FROM users WHERE email = '{user_data['email']}'"
+        cursor.execute(check_email_query)
+        email_exists = cursor.fetchone()[0]
+
+        if email_exists > 0:
+            return jsonify({"error": "E-mail já está em uso."}), 400  # 400 Bad Request
+
         # Criptografa a senha antes de armazenar no banco de dados
         senha_hash = generate_password_hash(user_data['senha'])
 
