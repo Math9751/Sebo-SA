@@ -34,7 +34,7 @@ def cadastrar_user():
         email_exists = cursor.fetchone()[0]
 
         if email_exists > 0:
-            return jsonify({"error": "E-mail já está em uso."}), 400  # 400 Bad Request
+            return jsonify({"error": "E-mail já está em uso."}), 409  # 400 Bad Request
 
         # Criptografa a senha antes de armazenar no banco de dados
         senha_hash = generate_password_hash(user_data['senha'])
