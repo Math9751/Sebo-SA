@@ -78,7 +78,11 @@ def login_user():
             print("Payload:", payload)
             print("Chave Secreta:", secret_key)
 
-            token = jwt.encode(payload, secret_key, algorithm='HS256')
+            token = jwt.encode({
+                'user_id': user[0],  # Substitua por sua lógica para obter o ID do usuário
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)
+                }, app.config['SECRET_KEY'], algorithm='HS256')
+
 
             print("Token Gerado:", token)
 
@@ -92,52 +96,121 @@ def login_user():
     except Exception as e:
         return jsonify({"error": str(e)}), 400  # 400 Bad Request
 
-# def verifica_token(f):
-#     @wraps(f)
-#     def decorator(*args, **kwargs):
-#         token = None
+def verifica_token(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
 
-#         if 'Authorization' in request.headers:
-#             token = request.headers['Authorization'].split(" ")[1]
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
 
-#         if not token:
-#             return jsonify({"error": "Token ausente."}), 401  # 401 Unauthorized
+        if not token:
+            return jsonify({"error": "Token ausente."}), 401  # 401 Unauthorized
 
-#         try:
-#             decoded_data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-#             # Adiciona informações do usuário ao contexto da solicitação
-#             g.user_id = decoded_data['user_id']
-#             print(f"Token decodificado com sucesso: {decoded_data}")
-#         except jwt.ExpiredSignatureError:
-#             return jsonify({"error": "Token expirado."}), 401  # 401 Unauthorized
-#         except jwt.InvalidTokenError as e:
-#             print(f"Erro ao decodificar o token: {e}")
-#             return jsonify({"error": f"Token inválido. Detalhes: {str(e)}"}), 401  # 401 Unauthorized
+        try:
+            decoded_data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+            # Adiciona informações do usuário ao contexto da solicitação
+            g.user_id = decoded_data['user_id']
+            print(f"Token decodificado com sucesso: {decoded_data}")
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expirado."}), 401  # 401 Unauthorized
+        except jwt.InvalidTokenError as e:
+            print(f"Erro ao decodificar o token: {e}")
+            return jsonify({"error": f"Token inválido. Detalhes: {str(e)}"}), 401  # 401 Unauthorized
 
-#         return f(*args, **kwargs)
+        return f(*args, **kwargs)
 
-#     return decorator
+    return decorator
+
+def verifica_admin(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        # Verifica se o usuário está autenticado
+        if 'user_id' not in g:
+            return jsonify({"error": "Usuário não autenticado."}), 401  # 401 Unauthorized
+
+        # Verifica se o usuário é um administrador
+        cursor = conexao.cursor()
+        read = f"SELECT isAdmin FROM users WHERE userID = {g.user_id}"
+        cursor.execute(read)
+        user = cursor.fetchone()
+
+        if user and user[0] == 1:  # 1 indica que o usuário é um administrador
+            return f(*args, **kwargs)
+        else:
+            return jsonify({"error": "Acesso não autorizado."}), 403  # 403 Forbidden
+
+    return decorator
 
 
-
-# @app.route('/users/perfil', methods=['GET'])
+@app.route('/users/relatorio', methods=['GET'])
 # @verifica_token
-# def obter_perfil_user():
-#     # O ID do usuário está disponível em g.user_id
-#     # Você pode usar isso para recuperar informações do usuário no banco de dados
-#     cursor = conexao.cursor()
-#     read = f"SELECT * FROM users WHERE userID = {g.user_id}"
-#     cursor.execute(read)
-#     user = cursor.fetchone()
-    
-#     if user:
-#         return jsonify({
-#             'nome': user[1],
-#             'email': user[2],
-#             'isAdmin': bool(user[4])  # Convertendo para booleano
-#         }), 200  # 200 OK
-#     else:
-#         return jsonify({"error": "Usuário não encontrado."}), 404  # 404 Not Found
+# @verifica_admin #verifica se o usuário é um admin antes de acessar essa funcionalidade
+def list_users():
+    try:
+        cursor = conexao.cursor()
+        read = "SELECT * FROM users WHERE status = 0"
+        cursor.execute(read)
+        users = cursor.fetchall()
+
+        user_list = []
+        for user in users:
+            user_list.append({
+                'userID': user[0],
+                'nome': user[1],
+                'email': user[2],
+                'isAdmin': bool(user[4])  # Convertendo para booleano
+            })
+
+        return jsonify({
+            'mensagem': 'Lista de usuários ativos.',
+            'usuarios': user_list
+        }), 200  # 200 OK
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # 500 Internal Server Error
+
+@app.route('/users/perfil', methods=['POST'])
+# @verifica_token
+# @verifica_admin #verifica se o usuário é um admin antes de acessar essa funcionalidade
+def profile_users():
+    dados_user = request.get_json()
+    try:
+        cursor = conexao.cursor()
+        update = "UPDATE users SET nome = %s, email = %s, senha = %s, tipo = %s WHERE userID = %s"
+        cursor.execute(update, (dados_user['nome'], dados_user['email'], dados_user['senha'], dados_user['tipo'], dados_user['userID']))
+
+        conexao.commit()
+
+        return jsonify({
+            'mensagem': 'Perfil do usuário atualizado com sucesso.',
+            'usuario': dados_user
+        }), 200  # 200 OK
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # 500 Internal Server Error
+ 
+
+#SOFT DELETE
+@app.route('/users/banidos', methods=['DELETE'])
+# @verifica_token
+# @verifica_admin #verifica se o usuário é um admin antes de acessar essa funcionalidade
+def ban_users():
+    dados_user = request.get_json()
+    try:
+        cursor = conexao.cursor()
+        delete = "UPDATE users SET status = 1 WHERE userID = %s"
+        cursor.execute(delete, (dados_user['userID'],))
+
+        conexao.commit()
+
+        return jsonify({
+            'mensagem': 'Usuário banido com sucesso.',
+            'usuarios': dados_user
+        }), 200  # 200 OK
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # 500 Internal Server Error
 
 #-----------ITENS------------------------------------------------------------------------------------
 @app.route('/itens', methods=['GET'])
@@ -203,7 +276,7 @@ def update_item():
         # Atualiza o item 
         cursor = conexao.cursor()
 
-        update = f"UPDATE itens SET titulo = '{item['titulo']}', autor = '{item['autor']}', preco = '{item['preco']}', descricao = '{item['descricao']}', periodicidade = '{item['periodicidade']}', dataEdicao = '{item['dataEdicao']}', userID = '{item['userID']}', categoriaID = '{item['categoriaID']}', WHERE id = '{item['itemID']}'"
+        update = f"UPDATE itens SET titulo = '{item['titulo']}', autor = '{item['autor']}', preco = '{item['preco']}', descricao = '{item['descricao']}', periodicidade = '{item['periodicidade']}', dataEdicao = '{item['dataEdicao']}', userID = '{item['userID']}', categoriaID = '{item['categoriaID']}' WHERE itemID = '{item['itemID']}'"
         cursor.execute(update)
         conexao.commit()
 
